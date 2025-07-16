@@ -1,0 +1,58 @@
+# Confluent Cloud Kafka Configuration Example
+# Copy this file to application-confluent.properties and update with your actual credentials
+# Then run with: java -jar app.jar --spring.profiles.active=confluent
+
+# Confluent Cloud Broker Configuration
+kafka.bootstrap-servers=pkc-xxxxx.us-west-2.aws.confluent.cloud:9092
+kafka.group-id=camel-kafka-consumer-group
+kafka.topic=your-topic-name
+
+# Security Configuration for Confluent Cloud
+kafka.security-protocol=SASL_SSL
+kafka.sasl-mechanism=PLAIN
+kafka.sasl-jaas-config=org.apache.kafka.common.security.plain.PlainLoginModule required username='YOUR_API_KEY' password='YOUR_API_SECRET';
+kafka.ssl-endpoint-identification-algorithm=https
+kafka.client-dns-lookup=use_all_dns_ips
+
+# Consumer Configuration
+kafka.auto-offset-reset=earliest
+kafka.enable-auto-commit=false
+kafka.session-timeout-ms=45000
+kafka.max-poll-records=10
+kafka.max-poll-interval-ms=300000
+
+# Producer Configuration (for reliability)
+kafka.acks=all
+kafka.retries=2147483647
+kafka.max-in-flight-requests-per-connection=5
+kafka.enable-idempotence=true
+
+# Deserializers
+kafka.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+kafka.value-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+
+# Confluent Schema Registry Configuration (optional - uncomment if using Avro)
+# kafka.schema-registry-url=https://psrc-xxxxx.us-west-2.aws.confluent.cloud
+# kafka.schema-registry-basic-auth-user-info=SR_API_KEY:SR_API_SECRET
+# kafka.value-deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer
+# kafka.key-deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer
+# kafka.specific-avro-reader=true
+
+# Spring Boot Configuration
+spring.application.name=camel-kafka-consumer
+server.port=8080
+
+# Camel Configuration
+camel.springboot.name=camel-kafka-consumer
+camel.springboot.main-run-controller=true
+camel.springboot.use-mdc-logging=true
+
+# Logging Configuration
+logging.level.com.example.camelkafka=INFO
+logging.level.org.apache.camel=INFO
+logging.level.org.apache.kafka=WARN
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+
+# Management endpoints for monitoring
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=always

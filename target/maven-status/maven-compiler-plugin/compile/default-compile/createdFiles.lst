@@ -1,0 +1,7 @@
+com/example/camelkafka/CamelKafkaConsumerApplication.class
+com/example/camelkafka/model/KafkaMessage.class
+com/example/camelkafka/config/KafkaProperties.class
+com/example/camelkafka/route/KafkaConsumerRoute.class
+com/example/camelkafka/model/KafkaMessage$KafkaMessageBuilder.class
+com/example/camelkafka/service/KafkaCallbackService.class
+com/example/camelkafka/processor/KafkaMessageProcessor.class
