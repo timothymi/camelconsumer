@@ -276,10 +276,6 @@ src/
 4. Push to branch: `git push origin feature/new-feature`
 5. Submit a pull request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## References
 
 - [Apache Camel Kafka Component](https://camel.apache.org/components/3.21.x/kafka-component.html)
