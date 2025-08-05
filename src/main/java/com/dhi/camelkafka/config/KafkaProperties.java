@@ -31,7 +31,7 @@ public class KafkaProperties {
     private String keyDeserializer = "org.apache.kafka.common.serialization.StringDeserializer";
     private String valueDeserializer = "org.apache.kafka.common.serialization.StringDeserializer";
     
-    // Confluent Cloud / Security Configuration
+    // Security Configuration (Apache Kafka with ACLs / Confluent Cloud)
     private String securityProtocol;
     private String saslMechanism;
     private String saslJaasConfig;
@@ -41,6 +41,20 @@ public class KafkaProperties {
     private Integer retries;
     private Integer maxInFlightRequestsPerConnection;
     private Boolean enableIdempotence;
+    
+    // Additional Apache Kafka Properties
+    private String clientId;
+    private Integer requestTimeoutMs;
+    private Integer defaultApiTimeoutMs;
+    
+    // SSL Configuration for Apache Kafka
+    private String sslTruststoreLocation;
+    private String sslTruststorePassword;
+    private String sslKeystoreLocation;
+    private String sslKeystorePassword;
+    private String sslKeyPassword;
+    private String sslTruststoreType;
+    private String sslKeystoreType;
     
     // Schema Registry Configuration
     private String schemaRegistryUrl;

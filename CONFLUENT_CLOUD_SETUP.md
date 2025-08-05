@@ -1,40 +1,48 @@
-# Confluent Cloud Multi-Topic Kafka Consumer Setup
+# Configuration Comparison: Apache Kafka vs Confluent Cloud
 
-## 🚀 How to Configure for Confluent Cloud
+This document compares the configuration differences between Apache Kafka with ACLs/SSL and Confluent Cloud, and provides migration guidance.
 
-### 1. Get Your Confluent Cloud Credentials
+## 🔄 Configuration Comparison Table
 
-First, you need to obtain your API credentials from Confluent Cloud:
+| Feature | Apache Kafka with ACLs | Confluent Cloud |
+|---------|------------------------|----------------|
+| **Security Protocol** | `SASL_PLAINTEXT` or `SASL_SSL` | `SASL_SSL` |
+| **SASL Mechanism** | `SCRAM-SHA-256` or `SCRAM-SHA-512` | `PLAIN` |
+| **SSL Certificates** | Java Keystores (JKS) | Managed by Confluent |
+| **Authentication** | SCRAM credentials | API Keys |
+| **ACL Management** | Manual via Kafka CLI | Confluent Cloud Console |
+| **Schema Registry** | Optional (self-managed) | Managed service |
+| **Monitoring** | Self-managed (JMX, etc.) | Built-in Confluent Cloud metrics |
 
-1. Log into your Confluent Cloud console
-2. Go to **Data Integration** > **API Keys**
-3. Create a new API Key with appropriate permissions for your topics
-4. Note down your **API Key** and **API Secret**
+## 📋 Apache Kafka with ACLs Configuration
 
-### 2. Configure Your Topics
-
-The application supports multiple ways to configure topics:
-
-#### Option A: Individual Topic Properties
+### SASL/PLAINTEXT (Development)
 ```properties
-kafka.topic1=json-purchase
-kafka.topic2=avro-purchase
-kafka.topic3=user-analytics
-kafka.topic4=order-events
-kafka.topic5=payment-events
+kafka.bootstrapServers=localhost:9092
+kafka.securityProtocol=SASL_PLAINTEXT
+kafka.saslMechanism=SCRAM-SHA-256
+kafka.saslJaasConfig=org.apache.kafka.common.security.scram.ScramLoginModule required username='kafka-consumer-user' password='dev-password';
 ```
 
-#### Option B: List-based Configuration
+### SASL/SSL with Java Keystores (Production)
 ```properties
-kafka.topics=json-purchase,avro-purchase,user-analytics,order-events,payment-events
+kafka.bootstrapServers=kafka-broker1.example.com:9093,kafka-broker2.example.com:9093
+kafka.securityProtocol=SASL_SSL
+kafka.saslMechanism=SCRAM-SHA-256
+kafka.saslJaasConfig=org.apache.kafka.common.security.scram.ScramLoginModule required username='kafka-consumer-user' password='prod-password';
+
+# SSL Configuration
+kafka.sslTruststoreLocation=/opt/kafka/config/ssl/kafka.client.truststore.jks
+kafka.sslTruststorePassword=truststore-password
+kafka.sslTruststoreType=JKS
+kafka.sslKeystoreLocation=/opt/kafka/config/ssl/kafka.client.keystore.jks
+kafka.sslKeystorePassword=keystore-password
+kafka.sslKeystoreType=JKS
+kafka.sslKeyPassword=key-password
+kafka.sslEndpointIdentificationAlgorithm=https
 ```
 
-#### Option C: Mixed Configuration
-You can use both approaches simultaneously. The application will merge all unique topics.
-
-### 3. Update application.properties
-
-Replace the placeholder values in your `application.properties`:
+## 🌐 Confluent Cloud Configuration
 
 ```properties
 # Replace with your actual Confluent Cloud bootstrap servers
@@ -119,3 +127,104 @@ INFO  o.a.c.i.engine.AbstractCamelContext - Started kafka-consumer-route-{topic}
 4. Use REST API for programmatic access to message data
 
 The application will automatically consume from all configured topics simultaneously, providing a unified view of your multi-topic Kafka consumption in the web dashboard.
+
+# Migration Guide: Apache Kafka to Confluent Cloud
+
+This guide provides steps to migrate your configuration from Apache Kafka with ACLs to Confluent Cloud.
+
+## 🔧 Migration Guide: Apache Kafka to Confluent Cloud
+
+### 1. Update Connection Settings
+```diff
+- kafka.bootstrapServers=localhost:9092
++ kafka.bootstrapServers=pkc-xxxxx.us-west-2.aws.confluent.cloud:9092
+
+- kafka.securityProtocol=SASL_PLAINTEXT
++ kafka.securityProtocol=SASL_SSL
+
+- kafka.saslMechanism=SCRAM-SHA-256
++ kafka.saslMechanism=PLAIN
+```
+
+### 2. Update Authentication
+```diff
+- kafka.saslJaasConfig=org.apache.kafka.common.security.scram.ScramLoginModule required username='kafka-consumer-user' password='user-password';
++ kafka.saslJaasConfig=org.apache.kafka.common.security.plain.PlainLoginModule required username='<API_KEY>' password='<API_SECRET>';
+```
+
+### 3. Remove SSL Keystore Configuration
+```diff
+- kafka.sslTruststoreLocation=/opt/kafka/config/ssl/kafka.client.truststore.jks
+- kafka.sslTruststorePassword=truststore-password
+- kafka.sslKeystoreLocation=/opt/kafka/config/ssl/kafka.client.keystore.jks
+- kafka.sslKeystorePassword=keystore-password
+- kafka.sslKeyPassword=key-password
+```
+
+### 4. Add Confluent Cloud Optimizations
+```properties
+# Add these for Confluent Cloud
+kafka.sslEndpointIdentificationAlgorithm=https
+kafka.clientDnsLookup=use_all_dns_ips
+kafka.acks=all
+kafka.retries=2147483647
+kafka.maxInFlightRequestsPerConnection=5
+kafka.enableIdempotence=true
+```
+
+## 🏃‍♂️ Running with Different Configurations
+
+### Apache Kafka with ACLs
+```bash
+# Development (SASL/PLAINTEXT)
+java -jar target/camel-kafka-consumer-1.0-SNAPSHOT.jar --spring.profiles.active=apache-kafka
+
+# Production (SASL/SSL with keystores)
+java -jar target/camel-kafka-consumer-1.0-SNAPSHOT.jar --spring.profiles.active=apache-kafka-ssl
+
+# Using environment variables
+java -jar target/camel-kafka-consumer-1.0-SNAPSHOT.jar --spring.profiles.active=apache-kafka-env
+```
+
+### Confluent Cloud
+```bash
+java -jar target/camel-kafka-consumer-1.0-SNAPSHOT.jar --spring.profiles.active=confluent
+```
+
+## 🔒 Security Considerations
+
+### Apache Kafka with ACLs
+- ✅ Full control over SSL certificates and keystores
+- ✅ Granular ACL management via CLI
+- ✅ On-premises or private cloud deployment
+- ⚠️ Requires SSL certificate management
+- ⚠️ Manual ACL configuration
+
+### Confluent Cloud
+- ✅ Managed SSL certificates
+- ✅ Web-based ACL management
+- ✅ Built-in monitoring and alerting
+- ✅ No infrastructure management required
+- ⚠️ API key management required
+- ⚠️ Vendor lock-in considerations
+
+## 🎯 Recommendations
+
+### Use Apache Kafka with ACLs when:
+- You need full control over infrastructure
+- Compliance requires on-premises deployment
+- You have existing Kafka infrastructure
+- Cost optimization for high-volume scenarios
+
+### Use Confluent Cloud when:
+- You want managed infrastructure
+- Rapid development and deployment is prioritized
+- Built-in monitoring and alerting is desired
+- Team lacks Kafka operational expertise
+
+## 📚 Additional Resources
+
+- [Apache Kafka ACL Setup Guide](APACHE_KAFKA_ACL_SETUP.md)
+- [SSL Keystore Setup Guide](SSL_KEYSTORE_SETUP.md)
+- [Confluent Cloud Documentation](https://docs.confluent.io/cloud/current/overview.html)
+- [Apache Kafka Security Guide](https://kafka.apache.org/documentation/#security)

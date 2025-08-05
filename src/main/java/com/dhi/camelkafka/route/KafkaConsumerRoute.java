@@ -73,7 +73,7 @@ public class KafkaConsumerRoute extends RouteBuilder {
         uriBuilder.append("&keyDeserializer=").append(kafkaProperties.getKeyDeserializer());
         uriBuilder.append("&valueDeserializer=").append(kafkaProperties.getValueDeserializer());
         
-        // Add Confluent Cloud / Security configuration if provided
+        // Add Security configuration (Apache Kafka with ACLs / Confluent Cloud)
         // Only include parameters that are directly supported by Camel Kafka component
         if (kafkaProperties.getSecurityProtocol() != null) {
             uriBuilder.append("&securityProtocol=").append(kafkaProperties.getSecurityProtocol());
@@ -83,6 +83,41 @@ public class KafkaConsumerRoute extends RouteBuilder {
         }
         if (kafkaProperties.getSaslJaasConfig() != null) {
             uriBuilder.append("&saslJaasConfig=").append(kafkaProperties.getSaslJaasConfig());
+        }
+        
+        // Add Apache Kafka specific configuration
+        if (kafkaProperties.getClientId() != null) {
+            uriBuilder.append("&clientId=").append(kafkaProperties.getClientId());
+        }
+        if (kafkaProperties.getRequestTimeoutMs() != null) {
+            uriBuilder.append("&requestTimeoutMs=").append(kafkaProperties.getRequestTimeoutMs());
+        }
+        // Note: defaultApiTimeoutMs is not supported by Camel Kafka component
+        
+        // Add SSL configuration for Apache Kafka
+        if (kafkaProperties.getSslTruststoreLocation() != null) {
+            uriBuilder.append("&sslTruststoreLocation=").append(kafkaProperties.getSslTruststoreLocation());
+        }
+        if (kafkaProperties.getSslTruststorePassword() != null) {
+            uriBuilder.append("&sslTruststorePassword=").append(kafkaProperties.getSslTruststorePassword());
+        }
+        if (kafkaProperties.getSslKeystoreLocation() != null) {
+            uriBuilder.append("&sslKeystoreLocation=").append(kafkaProperties.getSslKeystoreLocation());
+        }
+        if (kafkaProperties.getSslKeystorePassword() != null) {
+            uriBuilder.append("&sslKeystorePassword=").append(kafkaProperties.getSslKeystorePassword());
+        }
+        if (kafkaProperties.getSslKeyPassword() != null) {
+            uriBuilder.append("&sslKeyPassword=").append(kafkaProperties.getSslKeyPassword());
+        }
+        if (kafkaProperties.getSslTruststoreType() != null) {
+            uriBuilder.append("&sslTruststoreType=").append(kafkaProperties.getSslTruststoreType());
+        }
+        if (kafkaProperties.getSslKeystoreType() != null) {
+            uriBuilder.append("&sslKeystoreType=").append(kafkaProperties.getSslKeystoreType());
+        }
+        if (kafkaProperties.getSslEndpointIdentificationAlgorithm() != null) {
+            uriBuilder.append("&sslEndpointIdentificationAlgorithm=").append(kafkaProperties.getSslEndpointIdentificationAlgorithm());
         }
         
         // Note: Additional properties like ssl.endpoint.identification.algorithm, 

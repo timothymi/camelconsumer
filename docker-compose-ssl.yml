@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  camel-kafka-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: camel-kafka-consumer-ssl
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      # Kafka Configuration
+      KAFKA_BOOTSTRAP_SERVERS: "kafka-broker1.example.com:9093,kafka-broker2.example.com:9093,kafka-broker3.example.com:9093"
+      KAFKA_GROUP_ID: "camel-kafka-consumer-group-prod"
+      KAFKA_TOPICS: "ecs.AccessLogJsonV1,logs.application,events.user,metrics.system,alerts.critical"
+      
+      # Security Configuration
+      KAFKA_SECURITY_PROTOCOL: "SASL_SSL"
+      KAFKA_SASL_MECHANISM: "SCRAM-SHA-256"
+      KAFKA_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.scram.ScramLoginModule required username='kafka-consumer-user' password='${KAFKA_CONSUMER_PASSWORD}';"
+      
+      # SSL Keystore Configuration
+      KAFKA_SSL_TRUSTSTORE_LOCATION: "/opt/kafka/ssl/kafka.client.truststore.jks"
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: "${KAFKA_TRUSTSTORE_PASSWORD}"
+      KAFKA_SSL_TRUSTSTORE_TYPE: "JKS"
+      KAFKA_SSL_KEYSTORE_LOCATION: "/opt/kafka/ssl/kafka.client.keystore.jks"
+      KAFKA_SSL_KEYSTORE_PASSWORD: "${KAFKA_KEYSTORE_PASSWORD}"
+      KAFKA_SSL_KEYSTORE_TYPE: "JKS"
+      KAFKA_SSL_KEY_PASSWORD: "${KAFKA_KEY_PASSWORD}"
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: "https"
+      
+      # Consumer Configuration
+      KAFKA_AUTO_OFFSET_RESET: "earliest"
+      KAFKA_ENABLE_AUTO_COMMIT: "false"
+      KAFKA_SESSION_TIMEOUT_MS: "45000"
+      KAFKA_MAX_POLL_RECORDS: "10"
+      KAFKA_MAX_POLL_INTERVAL_MS: "300000"
+      KAFKA_CLIENT_ID: "camel-kafka-consumer-docker-client"
+      KAFKA_REQUEST_TIMEOUT_MS: "60000"
+      
+      # Application Configuration
+      SPRING_APPLICATION_NAME: "camel-kafka-consumer"
+      SERVER_PORT: "8086"
+      SPRING_PROFILES_ACTIVE: "apache-kafka-env"
+      LOG_LEVEL_ROOT: "INFO"
+      LOG_LEVEL_CAMEL: "INFO"
+      LOG_LEVEL_KAFKA: "WARN"
+      LOG_FILE_PATH: "/app/logs/application.log"
+      
+      # Health and Monitoring
+      MANAGEMENT_ENDPOINTS: "health,info,metrics"
+      MANAGEMENT_HEALTH_DETAILS: "when-authorized"
+      PROMETHEUS_ENABLED: "true"
+      
+    volumes:
+      # Mount SSL keystores and certificates
+      - "./ssl:/opt/kafka/ssl:ro"
+      # Mount logs directory
+      - "./logs:/app/logs"
+      # Optional: Mount additional configuration
+      - "./config:/app/config:ro"
+    
+    networks:
+      - kafka-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    depends_on:
+      - kafka-setup
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Kafka setup service for local testing
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka-setup-ssl
+    entrypoint: /bin/sh
+    command: |
+      -c "
+      echo 'Kafka setup container - used for dependency ordering'
+      sleep 5
+      "
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    driver: bridge
+
+volumes:
+  kafka-logs:
+    driver: local
